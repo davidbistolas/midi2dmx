@@ -5,7 +5,7 @@ To build: run python ./setup.py py2app --iconfile ./levels.icns
 
 This will create an app in ./dist/ called midi2dmx.app 
 
-REQUIRES: OLA, simplecoremidi and a uDMX USB Dongle. 
+REQUIRES: OLA, simplecoremidi, rumps and a uDMX USB Dongle.
 
 Input: MIDI - 16 channels, 32 DMX channes per Midi Channel, starting at note #24 (Middle C). 
 

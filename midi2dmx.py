@@ -34,6 +34,7 @@ import threading
 
 
 def split_seq(iterable, size):
+    """Little hack to split iterables up"""
     it = iter(iterable)
     item = list(itertools.islice(it, size))
     while item:
@@ -79,11 +80,13 @@ class Midi2Dmx(threading.Thread):
         super(Midi2Dmx, self).__init__()
 
     def run(self):
+        """Start up the service safely"""
         self.initialize()
         if self.dmx_wrapper:
             self.dmx_wrapper.Run()
 
     def stop(self):
+        """Stop the service safely"""
         if self.dmx_wrapper:
             self.notify("Stopping...",
                         "Stopping the DMX Bridge. Midi Events "
@@ -96,7 +99,7 @@ class Midi2Dmx(threading.Thread):
 
     def initialize(self):
         """
-        Zero out dmx, set up apple notification classes etc
+        Zero out dmx, set up events
         """
         try:
             self.dmx_wrapper = ClientWrapper()
