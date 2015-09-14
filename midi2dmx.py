@@ -80,17 +80,32 @@ class Midi2Dmx(threading.Thread):
 
     def run(self):
         self.initialize()
-        self.dmx_wrapper.Run()
+        if self.dmx_wrapper:
+            self.dmx_wrapper.Run()
 
     def stop(self):
-        self.dmx_wrapper.Stop()
+        if self.dmx_wrapper:
+            self.notify("Stopping...",
+                        "Stopping the DMX Bridge. Midi Events "
+                        "will NOT be sent to the DMX device")
+            self.dmx_wrapper.Stop()
+        else:
+            self.notify("DMX is not running",
+                        "Stop command issued to an inactive "
+                        "DMX bridge.")
 
     def initialize(self):
         """
         Zero out dmx, set up apple notification classes etc
         """
-        self.dmx_wrapper = ClientWrapper()
-        self.dmx_client = self.dmx_wrapper.Client()
+        try:
+            self.dmx_wrapper = ClientWrapper()
+            self.dmx_client = self.dmx_wrapper.Client()
+        except:
+            self.notify("OLAD is not running",
+                        "Attept to connect to OLAD failed. "
+                        "Please start it and try again.")
+            return
 
         self.dmx_wrapper.AddEvent(self.dmx_tick, self.send_to_dmx)
         self.dmx_wrapper.AddEvent(self.dmx_tick/2, self.get_midi_data)
@@ -100,21 +115,6 @@ class Midi2Dmx(threading.Thread):
         """Send an os x  notification"""
         title = "{} - Universe {}".format(self.appname, self.universe)
         rumps.notification(title,subtitle,info_text,sound=False)
-
-    def notify2(self, subtitle, info_text):
-        """  Send an OSX Notification
-        :param subtitle:
-        :param info_text:
-        :return:
-        """
-
-        title = "{} - Universe {}".format(self.appname, self.universe)
-
-        notification = self.NSUserNotification.alloc().init()
-        notification.setTitle_(title)
-        notification.setSubtitle_(subtitle)
-        notification.setInformativeText_(info_text)
-        self.NSUserNotificationCenter.defaultUserNotificationCenter().deliverNotification_(notification)
 
     def dmx_frame_sent(self, state):
         """SendDMX callback"""
@@ -199,19 +199,21 @@ class DmxBridge(rumps.App):
         self.appname = "{} - {}".format(__appname__, driver_name)
         icon = None
         menu = ["Start Bridge", "Stop Bridge"]
-        self.service = Midi2Dmx()
+        self.service = None
         super(DmxBridge, self).__init__(driver_name, driver_name, icon, menu, quit_button=None)
 
 
     @rumps.clicked("Start Bridge")
     def run_bridge(self, _):
         """ Starts up the bridge """
+        self.service = Midi2Dmx()
         self.service.start()
 
     @rumps.clicked("Stop Bridge")
     def stop_bridge(self, _):
         """ Stops the bridge """
-        self.service.stop()
+        if self.service:
+            self.service.stop()
 
     @rumps.clicked("Exit")
     def quit_app(self, _):
